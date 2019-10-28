@@ -1,14 +1,5 @@
 package com.jmj.giphysearch.domain.log
 
-/**
- *  ILogger.kt
- *  author:  jefferson jones
- *  org:     Beartooth, Inc
- *  github:  github.com/masterjefferson
- *  email:   jeff@beartooth.com
- */
-
-
 interface Logger {
   /**
    * Print to the log using VERBOSE verbosity level.

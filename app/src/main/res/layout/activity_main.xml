@@ -23,8 +23,8 @@
         android:id="@+id/helperControlsLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center_horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -37,19 +37,24 @@
             android:layout_height="wrap_content"
             android:text="@string/search_hint" />
 
-        <TextView
-            android:id="@+id/helperText"
-            android:textAppearance="?textAppearanceCaption"
-            tools:text="This is a helper message."
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-
         <ProgressBar
+            android:layout_marginTop="4dp"
             android:id="@+id/progressIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            />
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="?colorSecondary"
+            android:indeterminateOnly="true"
+            android:indeterminateTint="#fff"
+            android:padding="2dp" />
+
+        <TextView
+            android:layout_marginTop="4dp"
+            android:id="@+id/helperText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?textAppearanceCaption"
+            tools:text="This is a helper message." />
 
     </LinearLayout>
 

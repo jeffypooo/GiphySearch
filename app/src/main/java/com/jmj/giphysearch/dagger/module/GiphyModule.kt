@@ -9,15 +9,6 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Named
-import javax.inject.Singleton
-
-/**
- *  GiphyModule.kt
- *  author:  jefferson jones
- *  org:     Beartooth, Inc
- *  github:  github.com/masterjefferson
- *  email:   jeff@beartooth.com
- */
 
 @Module
 class GiphyModule(private val baseUrl: String = "https://api.giphy.com") {

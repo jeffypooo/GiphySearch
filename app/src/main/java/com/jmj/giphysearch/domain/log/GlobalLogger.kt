@@ -1,7 +1,5 @@
 package com.jmj.giphysearch.domain.log
 
-import java.util.*
-
 /**
  * Logger - A logging API that supports multiple outputs, verbosity filtering, and varargs string formatting.
  */

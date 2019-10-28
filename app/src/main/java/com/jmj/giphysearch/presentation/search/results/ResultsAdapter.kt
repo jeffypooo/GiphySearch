@@ -15,6 +15,8 @@ class ResultsAdapter(private val glide: RequestManager) : RecyclerView.Adapter<G
 
   private val gifs = mutableListOf<GifObject>()
 
+  private var itemClickListener: ((GifObject) -> Unit)? = null
+
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GifViewHolder {
     return GifViewHolder(
       layoutInflater(parent).inflate(
@@ -31,13 +33,13 @@ class ResultsAdapter(private val glide: RequestManager) : RecyclerView.Adapter<G
 
   override fun onBindViewHolder(holder: GifViewHolder, position: Int) {
     val obj = gifs[position]
-    glide.load(obj.images.fixedWidth.url)
+    glide.load(obj.images.fixedWidthDownsampled.url)
       .override(Target.SIZE_ORIGINAL)
       .placeholder(R.drawable.ic_gif_placeholder)
       .centerCrop()
       .into(holder.imageView)
+    holder.imageView.setOnClickListener { itemClickListener?.invoke(obj) }
   }
-
 
 
   fun addAll(newGifs: Collection<GifObject>) {
@@ -52,6 +54,10 @@ class ResultsAdapter(private val glide: RequestManager) : RecyclerView.Adapter<G
     val prevSize = gifs.size
     gifs.clear()
     notifyItemRangeRemoved(0, prevSize)
+  }
+
+  fun setOnItemClickListener(block: ((GifObject) -> Unit)?) {
+    this.itemClickListener = block
   }
 
   companion object {

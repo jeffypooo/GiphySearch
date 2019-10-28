@@ -18,13 +18,10 @@ import com.jmj.giphysearch.dagger.component.DaggerSearchComponent
 import com.jmj.giphysearch.domain.api.model.GifObject
 import com.jmj.giphysearch.domain.log.GlobalLogger
 import com.jmj.giphysearch.presentation.common.AppActivity
+import com.jmj.giphysearch.presentation.search.detail.GifDetailsBottomSheet
 import com.jmj.giphysearch.presentation.search.results.PaddingDecoration
 import com.jmj.giphysearch.presentation.search.results.ResultsAdapter
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import android.widget.SearchView as SearchViewWidget
 
 class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
@@ -44,7 +41,9 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
     //FIXME: this code is implicitly coupled to giphy API using 200 pixel fixed widths
     val numColumns = resources.displayMetrics.widthPixels / 200
     val layoutManager = StaggeredGridLayoutManager(numColumns, RecyclerView.VERTICAL)
-    val adapter = ResultsAdapter(Glide.with(this))
+    val adapter = ResultsAdapter(Glide.with(this)).apply {
+      setOnItemClickListener(presenter::onGifClick)
+    }
     gifRecyclerView.apply {
       this.adapter = adapter
       this.layoutManager = layoutManager
@@ -113,6 +112,10 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
     resultsAdapter.clear()
   }
 
+  override fun presentGifDetailsSheet(id: String) = runOnUiThread {
+    GifDetailsBottomSheet.newInstance(id).show(supportFragmentManager, "gif_dets_$id")
+  }
+
   override fun shortSnackbar(msg: String) = runOnUiThread {
     Snackbar.make(contentView, msg, Snackbar.LENGTH_SHORT).show()
   }
@@ -132,7 +135,7 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
 
   private val scrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-      if (dy < 0) return
+      if (dy < 0) return // ignore if scrolling up
       val lm = recyclerView.layoutManager as StaggeredGridLayoutManager
       /* if we have reached the bottom, the position (index) of the first
       * visible item PLUS the visible item count should be equal to total item count. */

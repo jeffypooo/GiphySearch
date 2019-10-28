@@ -1,6 +1,7 @@
 package com.jmj.giphysearch.presentation.search
 
 import com.jmj.giphysearch.domain.api.GiphyApi
+import com.jmj.giphysearch.domain.api.model.GifObject
 import com.jmj.giphysearch.domain.api.model.SearchResponse
 import com.jmj.giphysearch.domain.log.Logger
 import com.jmj.giphysearch.presentation.common.AppActivityPresenter
@@ -10,6 +11,7 @@ import io.reactivex.rxkotlin.subscribeBy
 import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Named
+import kotlin.math.min
 
 class SearchPresenter @Inject constructor(
   private val logger: Logger,
@@ -18,10 +20,7 @@ class SearchPresenter @Inject constructor(
 ) : AppActivityPresenter<SearchView>() {
 
   private val searchDisposables = CompositeDisposable()
-  //FIXME: these should probably be protected by a lock/monitor
-  private var currentSearchQuery = ""
-  private var currentOffset = 0
-  private var searchQueryRunning = false
+  private val searchState = SearchState()
 
   override fun onCreate(view: SearchView) {
     super.onCreate(view)
@@ -37,7 +36,6 @@ class SearchPresenter @Inject constructor(
     searchDisposables.clear()
   }
 
-
   fun onSearchMenuItemClick() {
     view?.apply {
       setSearchHelperText("")
@@ -47,8 +45,8 @@ class SearchPresenter @Inject constructor(
 
   fun onSearchSubmitted(query: String) {
     searchDisposables.clear()
-    currentSearchQuery = query
-    currentOffset = 0
+    searchState.reset()
+    searchState.query = query
     view?.apply {
       clearResults()
       setSearchHelperText("Searching for '$query'...")
@@ -57,23 +55,37 @@ class SearchPresenter @Inject constructor(
   }
 
   fun onScrolledToBottom() {
-    if (searchQueryRunning) return
-    currentOffset += SEARCH_PAGE_SIZE
-    doSearch()
+    if (searchState.isRunningQuery) return
+    val newOffset = min(
+      searchState.offset + SEARCH_PAGE_SIZE,
+      searchState.total
+    )
+    if (newOffset < searchState.total) {
+      logger.d(TAG, "new offset = $newOffset")
+      searchState.offset = newOffset
+      doSearch()
+    } else {
+      logger.d(TAG, "end of results.")
+    }
+  }
+
+  fun onGifClick(obj: GifObject) {
+    logger.d(TAG, "presenting dets for ${obj.id}")
+    view?.presentGifDetailsSheet(obj.id)
   }
 
   private fun doSearch() {
-    logger.d(TAG, "searching for '$currentSearchQuery'...")
+    logger.d(TAG, "searching for '${searchState.query}'...")
+    searchState.isRunningQuery = true
     view?.showProgressIndicator(true)
-    searchQueryRunning = true
-    giphyApi.search(giphyApiKey, currentSearchQuery, limit = SEARCH_PAGE_SIZE, offset = currentOffset)
+    giphyApi.search(giphyApiKey, searchState.query, SEARCH_PAGE_SIZE, searchState.offset)
       .subscribeBy(onError = this::searchFailed, onNext = this::searchComplete)
       .addTo(searchDisposables)
   }
 
   private fun searchFailed(err: Throwable) {
-    logger.e(TAG, "search failed - $err")
-    searchQueryRunning = false
+    logger.e(TAG, err, "search failed")
+    searchState.reset()
     view?.apply {
       clearResults()
       showProgressIndicator(false)
@@ -84,7 +96,8 @@ class SearchPresenter @Inject constructor(
 
   private fun searchComplete(res: SearchResponse) {
     dumpResponse(res)
-    searchQueryRunning = false
+    searchState.isRunningQuery = false
+    searchState.total = res.pagination.totalCount
     logger.d(TAG, "adding ${res.pagination.count} results to view")
     view?.apply {
       setSearchHelperText(if (res.data.isEmpty()) "No results :(." else "")
@@ -103,6 +116,20 @@ class SearchPresenter @Inject constructor(
 
   companion object {
     private const val TAG = "SearchPresenter"
-    const val SEARCH_PAGE_SIZE = 50
+    const val SEARCH_PAGE_SIZE = 20
+  }
+}
+
+class SearchState(
+  var query: String = "",
+  var offset: Int = 0,
+  var total: Int = 0,
+  var isRunningQuery: Boolean = false
+) {
+  fun reset() {
+    query = ""
+    offset = 0
+    total = 0
+    isRunningQuery = false
   }
 }

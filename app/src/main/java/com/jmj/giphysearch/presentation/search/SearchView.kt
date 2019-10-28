@@ -10,4 +10,5 @@ interface SearchView : AppView {
   fun setSearchHelperText(status: String)
   fun showSearchHelperButton(show: Boolean)
   fun showProgressIndicator(show: Boolean)
+  fun presentGifDetailsSheet(id: String)
 }

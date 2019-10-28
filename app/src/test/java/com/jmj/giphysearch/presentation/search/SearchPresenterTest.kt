@@ -98,7 +98,7 @@ class SearchPresenterTest {
     verify(mockApi).search(
       apiKey = mockApiKey,
       query = query,
-      limit = 100,
+      limit = SearchPresenter.SEARCH_PAGE_SIZE,
       offset = 0
     )
 
@@ -157,6 +157,66 @@ class SearchPresenterTest {
     verify(mockView, times(2)).clearResults()
     verify(mockView).setSearchHelperText("Network error :(.")
     verify(mockView, times(2)).showProgressIndicator(false)
+  }
+
+  @Test
+  fun `when the search results are scrolled to the bottom, the search is updated with a new results page`() {
+    /* stub api mock to return a test response */
+    val testResponse = getTestSearchResponse();
+    mockApi.stub {
+      on {
+        search(any(), any(), any(), any(), any(), any())
+      } doReturn Observable.just(testResponse)
+    }
+
+    driveToResumed()
+
+    /* user submits a search query, and scrolls to the end of results */
+    val query = "foobar"
+    presenter.onSearchSubmitted(query)
+    presenter.onScrolledToBottom()
+
+    /* api should have been called with offsets */
+    verify(mockApi).search(
+      any(),
+      eq(query),
+      eq(SearchPresenter.SEARCH_PAGE_SIZE),
+      eq(0),
+      any(),
+      any()
+    )
+    verify(mockApi).search(
+      any(),
+      eq(query),
+      eq(SearchPresenter.SEARCH_PAGE_SIZE),
+      eq(SearchPresenter.SEARCH_PAGE_SIZE),
+      any(),
+      any()
+    )
+
+    /* results should have been added twice */
+    verify(mockView, times(2)).addResults(testResponse.data)
+
+  }
+  @Test
+  fun `when a GIF is clicked, a details sheet is presented`() {
+    /* stub api mock to return a test response */
+    val testResponse = getTestSearchResponse();
+    mockApi.stub {
+      on {
+        search(any(), any(), any(), any(), any(), any())
+      } doReturn Observable.just(testResponse)
+    }
+
+    driveToResumed()
+
+    /* user submits search and clicks first image */
+    val gif = testResponse.data.first()
+    presenter.onSearchSubmitted("foobar")
+    presenter.onGifClick(gif)
+
+    /* a details sheet should be presented */
+    verify(mockView).presentGifDetailsSheet(gif.id)
   }
 
 

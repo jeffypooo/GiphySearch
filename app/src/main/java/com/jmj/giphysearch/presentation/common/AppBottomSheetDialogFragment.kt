@@ -1,9 +1,15 @@
 package com.jmj.giphysearch.presentation.common
 
-import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-abstract class AppActivity<P : AppActivityPresenter<*>> : AppCompatActivity() {
+abstract class AppBottomSheetDialogFragment<P : AppFragmentPresenter<*>> : BottomSheetDialogFragment() {
+
   abstract val presenter: P
+
+  override fun onDestroyView() {
+    super.onDestroyView()
+    presenter.onDestroyView()
+  }
 
   override fun onStart() {
     super.onStart()
@@ -25,8 +31,5 @@ abstract class AppActivity<P : AppActivityPresenter<*>> : AppCompatActivity() {
     presenter.onPause()
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-    presenter.onDestroy()
-  }
+
 }

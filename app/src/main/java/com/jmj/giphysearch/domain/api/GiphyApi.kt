@@ -1,18 +1,11 @@
 package com.jmj.giphysearch.domain.api
 
+import com.jmj.giphysearch.domain.api.model.GetResponse
 import com.jmj.giphysearch.domain.api.model.SearchResponse
 import io.reactivex.Observable
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
-
-/**
- *  GiphyApi
- *  author:  jefferson jones
- *  org:     Beartooth, Inc
- *  github:  github.com/masterjefferson
- *  email:   jeff@beartooth.com
- */
-
 
 interface GiphyApi {
 
@@ -25,6 +18,12 @@ interface GiphyApi {
     @Query("rating") rating: String = "R",
     @Query("lang") lang: String = "en"
   ): Observable<SearchResponse>
+
+  @GET("v1/gifs/{gif_id}")
+  fun getById(
+    @Path("gif_id") gifId: String,
+    @Query("api_key") apiKey: String
+  ): Observable<GetResponse>
 
 
 }
