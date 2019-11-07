@@ -23,18 +23,6 @@ import com.jmj.giphysearch.presentation.search.results.ResultsAdapter
 import kotlinx.android.synthetic.main.activity_main.*
 import android.widget.SearchView as SearchViewWidget
 
-private fun Bundle.putViewState(state: SearchView.State) {
-  putString("helperText", state.helperText)
-  putBoolean("isHelperButtonVisible", state.isHelperButtonVisible)
-  putBoolean("isProgressIndicatorVisible", state.isProgressIndicatorVisible)
-}
-
-private fun Bundle.readViewState() = SearchView.State(
-  helperText = getString("helperText", ""),
-  isHelperButtonVisible = getBoolean("isHelperButtonVisible"),
-  isProgressIndicatorVisible = getBoolean("isProgressIndicatorVisible")
-)
-
 class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
 
   override val presenter: SearchPresenter by lazy {

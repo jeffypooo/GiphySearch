@@ -23,7 +23,7 @@ class SearchPresenter @Inject constructor(
   private val searchState = SearchState()
 
   var viewState = SearchView.State(
-    helperText =  "Tap search to find GIFs.",
+    helperText = "Tap search to find GIFs.",
     isHelperButtonVisible = true
   )
 
@@ -45,8 +45,7 @@ class SearchPresenter @Inject constructor(
 
   fun onSearchSubmitted(query: String) {
     searchDisposables.clear()
-    searchState.reset()
-    searchState.query = query
+    searchState.reset(query)
     view?.clearResults()
     updateViewState(helperText = "Searching for '$query'...")
     doSearch()
@@ -54,10 +53,7 @@ class SearchPresenter @Inject constructor(
 
   fun onScrolledToBottom() {
     if (searchState.isRunningQuery) return
-    val newOffset = min(
-      searchState.offset + SEARCH_PAGE_SIZE,
-      searchState.total
-    )
+    val newOffset = min(searchState.offset + SEARCH_PAGE_SIZE, searchState.total)
     if (newOffset < searchState.total) {
       logger.d(TAG, "new offset = $newOffset")
       searchState.offset = newOffset
@@ -93,23 +89,16 @@ class SearchPresenter @Inject constructor(
   }
 
   private fun searchComplete(res: SearchResponse) {
-    dumpResponse(res)
-    searchState.isRunningQuery = false
-    searchState.total = res.pagination.totalCount
-    logger.d(TAG, "adding ${res.pagination.count} results to view")
+    searchState.apply {
+      isRunningQuery = false
+      total = res.pagination.totalCount
+    }
     updateViewState(
       helperText = if (res.data.isEmpty()) "No results :(." else "",
       isProgressIndicatorVisible = false
     )
+    logger.d(TAG, "adding ${res.pagination.count} results to view")
     view?.addResults(res.data)
-  }
-
-  private fun dumpResponse(res: SearchResponse) {
-    val metaDesc = res.meta.let { "${it.status} ${it.msg}" }
-    val paginationDesc = res.pagination.let {
-      "count: ${it.count}, offs: ${it.offset}, total: ${it.totalCount}"
-    }
-    logger.v(TAG, "search response - $metaDesc - $paginationDesc")
   }
 
   private fun updateViewState(
@@ -126,6 +115,20 @@ class SearchPresenter @Inject constructor(
   }
 
 
+  private class SearchState(
+    var query: String = "",
+    var offset: Int = 0,
+    var total: Int = 0,
+    var isRunningQuery: Boolean = false
+  ) {
+    fun reset(newQuery: String = "") {
+      query = newQuery
+      offset = 0
+      total = 0
+      isRunningQuery = false
+    }
+  }
+
   companion object {
     private const val TAG = "SearchPresenter"
     const val SEARCH_PAGE_SIZE = 20
@@ -134,16 +137,3 @@ class SearchPresenter @Inject constructor(
 
 }
 
-private class SearchState(
-  var query: String = "",
-  var offset: Int = 0,
-  var total: Int = 0,
-  var isRunningQuery: Boolean = false
-) {
-  fun reset() {
-    query = ""
-    offset = 0
-    total = 0
-    isRunningQuery = false
-  }
-}

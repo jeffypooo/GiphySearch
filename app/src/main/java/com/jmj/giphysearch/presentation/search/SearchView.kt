@@ -11,7 +11,7 @@ interface SearchView : AppView {
   fun presentGifDetailsSheet(id: String)
 
   data class State(
-    val helperText: String = "Tap search to find GIFs.",
+    val helperText: String = "",
     val isHelperButtonVisible: Boolean = true,
     val isProgressIndicatorVisible: Boolean = false
   )
