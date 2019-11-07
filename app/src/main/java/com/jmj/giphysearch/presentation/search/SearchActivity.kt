@@ -16,13 +16,24 @@ import com.jmj.giphysearch.android.util.isSearchAction
 import com.jmj.giphysearch.android.util.searchQueryExtra
 import com.jmj.giphysearch.dagger.component.DaggerSearchComponent
 import com.jmj.giphysearch.domain.api.model.GifObject
-import com.jmj.giphysearch.domain.log.GlobalLogger
 import com.jmj.giphysearch.presentation.common.AppActivity
 import com.jmj.giphysearch.presentation.search.detail.GifDetailsBottomSheet
 import com.jmj.giphysearch.presentation.search.results.PaddingDecoration
 import com.jmj.giphysearch.presentation.search.results.ResultsAdapter
 import kotlinx.android.synthetic.main.activity_main.*
 import android.widget.SearchView as SearchViewWidget
+
+private fun Bundle.putViewState(state: SearchView.State) {
+  putString("helperText", state.helperText)
+  putBoolean("isHelperButtonVisible", state.isHelperButtonVisible)
+  putBoolean("isProgressIndicatorVisible", state.isProgressIndicatorVisible)
+}
+
+private fun Bundle.readViewState() = SearchView.State(
+  helperText = getString("helperText", ""),
+  isHelperButtonVisible = getBoolean("isHelperButtonVisible"),
+  isProgressIndicatorVisible = getBoolean("isProgressIndicatorVisible")
+)
 
 class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
 
@@ -57,9 +68,15 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
       menu.performIdentifierAction(R.id.search, 0)
     }
 
+    savedInstanceState?.let { presenter.viewState = it.readViewState() }
     presenter.onCreate(this)
 
     handleIntent()
+  }
+
+  override fun onSaveInstanceState(outState: Bundle) {
+    super.onSaveInstanceState(outState)
+    outState.putViewState(presenter.viewState)
   }
 
   override fun onNewIntent(intent: Intent?) {
@@ -92,17 +109,12 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
     else                       -> false
   }
 
-  override fun setSearchHelperText(status: String) = runOnUiThread {
-    helperText.text = status
+  override fun applyState(state: SearchView.State) = runOnUiThread {
+    helperText.text = state.helperText
+    searchHelperButton.isVisible = state.isHelperButtonVisible
+    progressIndicator.isVisible = state.isProgressIndicatorVisible
   }
 
-  override fun showSearchHelperButton(show: Boolean) = runOnUiThread {
-    searchHelperButton.isVisible = show
-  }
-
-  override fun showProgressIndicator(show: Boolean) = runOnUiThread {
-    progressIndicator.isVisible = show
-  }
 
   override fun addResults(results: List<GifObject>) = runOnUiThread {
     resultsAdapter.addAll(results)
@@ -147,7 +159,6 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
 
     }
   }
-
 
   companion object {
     private const val TAG = "MainActivity"

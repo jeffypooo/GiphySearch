@@ -22,35 +22,33 @@ class SearchPresenter @Inject constructor(
   private val searchDisposables = CompositeDisposable()
   private val searchState = SearchState()
 
+  var viewState = SearchView.State(
+    helperText =  "Tap search to find GIFs.",
+    isHelperButtonVisible = true
+  )
+
   override fun onCreate(view: SearchView) {
     super.onCreate(view)
-    view.apply {
-      setSearchHelperText("Tap search to find GIFs.")
-      showSearchHelperButton(true)
-      showProgressIndicator(false)
-    }
+    logger.d(TAG, "created")
+    view.applyState(viewState)
   }
 
   override fun onDestroy() {
     super.onDestroy()
+    logger.d(TAG, "destroyed")
     searchDisposables.clear()
   }
 
   fun onSearchMenuItemClick() {
-    view?.apply {
-      setSearchHelperText("")
-      showSearchHelperButton(false)
-    }
+    updateViewState(helperText = "", isHelperButtonVisible = false)
   }
 
   fun onSearchSubmitted(query: String) {
     searchDisposables.clear()
     searchState.reset()
     searchState.query = query
-    view?.apply {
-      clearResults()
-      setSearchHelperText("Searching for '$query'...")
-    }
+    view?.clearResults()
+    updateViewState(helperText = "Searching for '$query'...")
     doSearch()
   }
 
@@ -77,7 +75,7 @@ class SearchPresenter @Inject constructor(
   private fun doSearch() {
     logger.d(TAG, "searching for '${searchState.query}'...")
     searchState.isRunningQuery = true
-    view?.showProgressIndicator(true)
+    updateViewState(isProgressIndicatorVisible = true)
     giphyApi.search(giphyApiKey, searchState.query, SEARCH_PAGE_SIZE, searchState.offset)
       .subscribeBy(onError = this::searchFailed, onNext = this::searchComplete)
       .addTo(searchDisposables)
@@ -86,11 +84,11 @@ class SearchPresenter @Inject constructor(
   private fun searchFailed(err: Throwable) {
     logger.e(TAG, err, "search failed")
     searchState.reset()
-    view?.apply {
-      clearResults()
-      showProgressIndicator(false)
-      setSearchHelperText(if (err is UnknownHostException) "Network error :(." else "Unknown error :(.")
-    }
+    view?.clearResults()
+    updateViewState(
+      helperText = if (err is UnknownHostException) "Network error :(." else "Unknown error :(.",
+      isProgressIndicatorVisible = false
+    )
 
   }
 
@@ -99,11 +97,11 @@ class SearchPresenter @Inject constructor(
     searchState.isRunningQuery = false
     searchState.total = res.pagination.totalCount
     logger.d(TAG, "adding ${res.pagination.count} results to view")
-    view?.apply {
-      setSearchHelperText(if (res.data.isEmpty()) "No results :(." else "")
-      showProgressIndicator(false)
-      addResults(res.data)
-    }
+    updateViewState(
+      helperText = if (res.data.isEmpty()) "No results :(." else "",
+      isProgressIndicatorVisible = false
+    )
+    view?.addResults(res.data)
   }
 
   private fun dumpResponse(res: SearchResponse) {
@@ -114,13 +112,29 @@ class SearchPresenter @Inject constructor(
     logger.v(TAG, "search response - $metaDesc - $paginationDesc")
   }
 
+  private fun updateViewState(
+    helperText: String = viewState.helperText,
+    isHelperButtonVisible: Boolean = viewState.isHelperButtonVisible,
+    isProgressIndicatorVisible: Boolean = viewState.isProgressIndicatorVisible
+  ) {
+    viewState = viewState.copy(
+      helperText = helperText,
+      isHelperButtonVisible = isHelperButtonVisible,
+      isProgressIndicatorVisible = isProgressIndicatorVisible
+    ).also { logger.v(TAG, "view state = $it") }
+    view?.applyState(viewState)
+  }
+
+
   companion object {
     private const val TAG = "SearchPresenter"
     const val SEARCH_PAGE_SIZE = 20
   }
+
+
 }
 
-class SearchState(
+private class SearchState(
   var query: String = "",
   var offset: Int = 0,
   var total: Int = 0,

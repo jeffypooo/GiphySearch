@@ -8,10 +8,14 @@ import com.jmj.giphysearch.domain.log.StdoutSink
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldEqual
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.net.UnknownHostException
+
+private fun viewStateCaptor() = argumentCaptor<SearchView.State>()
 
 class SearchPresenterTest {
 
@@ -39,19 +43,28 @@ class SearchPresenterTest {
   @Test
   fun `on create, helper text is set to helpful message`() {
     presenter.onCreate(mockView)
-    verify(mockView).setSearchHelperText("Tap search to find GIFs.")
+    viewStateCaptor().apply {
+      verify(mockView).applyState(capture())
+      lastValue.helperText shouldEqual "Tap search to find GIFs."
+    }
   }
 
   @Test
   fun `on create, helper button shown`() {
     presenter.onCreate(mockView)
-    verify(mockView).showSearchHelperButton(true)
+    viewStateCaptor().apply {
+      verify(mockView).applyState(capture())
+      lastValue.isHelperButtonVisible shouldEqual true
+    }
   }
 
   @Test
   fun `on create, progress indicator is hidden`() {
     presenter.onCreate(mockView)
-    verify(mockView).showProgressIndicator(false)
+    viewStateCaptor().apply {
+      verify(mockView).applyState(capture())
+      lastValue.isProgressIndicatorVisible shouldEqual false
+    }
   }
 
   @Test
@@ -61,7 +74,10 @@ class SearchPresenterTest {
     /* user clicks search */
     presenter.onSearchMenuItemClick()
 
-    verify(mockView).setSearchHelperText("")
+    viewStateCaptor().apply {
+      verify(mockView, times(2)).applyState(capture())
+      lastValue.helperText shouldEqual ""
+    }
   }
 
   @Test
@@ -71,7 +87,10 @@ class SearchPresenterTest {
     /* user clicks search */
     presenter.onSearchMenuItemClick()
 
-    verify(mockView).showSearchHelperButton(false)
+    viewStateCaptor().apply {
+      verify(mockView, times(2)).applyState(capture())
+      lastValue.isHelperButtonVisible shouldBe false
+    }
   }
 
   @Test
@@ -89,9 +108,12 @@ class SearchPresenterTest {
     presenter.onSearchSubmitted(query)
 
 
-    /* helper controls should display 'in progress' info to user here, and exisiting results should be cleared */
-    verify(mockView).setSearchHelperText("Searching for 'foobar'...")
-    verify(mockView).showProgressIndicator(true)
+    /* helper controls should display 'in progress' info to user here, and existing results should be cleared */
+    viewStateCaptor().apply {
+      verify(mockView, times(3)).applyState(capture())
+      lastValue.helperText shouldEqual "Searching for 'foobar'..."
+      lastValue.isProgressIndicatorVisible shouldBe true
+    }
     verify(mockView).clearResults()
 
     /* api call is made */
@@ -107,8 +129,11 @@ class SearchPresenterTest {
     responseEmitter.onNext(testResponse)
 
     /* results should be added and helper controls hidden */
-    verify(mockView).setSearchHelperText("")
-    verify(mockView, times(2)).showProgressIndicator(false)
+    viewStateCaptor().apply {
+      verify(mockView, times(4)).applyState(capture())
+      lastValue.helperText shouldEqual ""
+      lastValue.isProgressIndicatorVisible shouldBe false
+    }
     verify(mockView).addResults(testResponse.data)
 
   }
@@ -133,8 +158,11 @@ class SearchPresenterTest {
     responseEmitter.onNext(testResponse)
 
     /* results should be added and helper controls hidden */
-    verify(mockView).setSearchHelperText("No results :(.")
-    verify(mockView, times(2)).showProgressIndicator(false)
+    viewStateCaptor().apply {
+      verify(mockView, times(4)).applyState(capture())
+      lastValue.helperText shouldEqual "No results :(."
+      lastValue.isProgressIndicatorVisible shouldBe false
+    }
     verify(mockView).addResults(testResponse.data)
 
   }
@@ -155,8 +183,11 @@ class SearchPresenterTest {
     presenter.onSearchSubmitted(query)
 
     verify(mockView, times(2)).clearResults()
-    verify(mockView).setSearchHelperText("Network error :(.")
-    verify(mockView, times(2)).showProgressIndicator(false)
+    viewStateCaptor().apply {
+      verify(mockView, times(4)).applyState(capture())
+      lastValue.helperText shouldEqual "Network error :(."
+      lastValue.isProgressIndicatorVisible shouldBe false
+    }
   }
 
   @Test
@@ -198,6 +229,7 @@ class SearchPresenterTest {
     verify(mockView, times(2)).addResults(testResponse.data)
 
   }
+
   @Test
   fun `when a GIF is clicked, a details sheet is presented`() {
     /* stub api mock to return a test response */

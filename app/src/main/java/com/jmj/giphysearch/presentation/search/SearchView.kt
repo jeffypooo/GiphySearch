@@ -7,8 +7,13 @@ import com.jmj.giphysearch.presentation.common.AppView
 interface SearchView : AppView {
   fun addResults(results: List<GifObject>)
   fun clearResults()
-  fun setSearchHelperText(status: String)
-  fun showSearchHelperButton(show: Boolean)
-  fun showProgressIndicator(show: Boolean)
+  fun applyState(state: State)
   fun presentGifDetailsSheet(id: String)
+
+  data class State(
+    val helperText: String = "Tap search to find GIFs.",
+    val isHelperButtonVisible: Boolean = true,
+    val isProgressIndicatorVisible: Boolean = false
+  )
+
 }
