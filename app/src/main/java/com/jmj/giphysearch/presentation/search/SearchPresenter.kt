@@ -131,7 +131,7 @@ class SearchPresenter @Inject constructor(
 
   companion object {
     private const val TAG = "SearchPresenter"
-    const val SEARCH_PAGE_SIZE = 20
+    const val SEARCH_PAGE_SIZE = 50
   }
 
 

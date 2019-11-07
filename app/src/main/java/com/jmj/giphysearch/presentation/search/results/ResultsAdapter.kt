@@ -4,6 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
+import com.bumptech.glide.load.DecodeFormat
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.target.Target
 import com.jmj.giphysearch.R
 import com.jmj.giphysearch.android.util.layoutInflater
@@ -37,6 +39,8 @@ class ResultsAdapter(private val glide: RequestManager) : RecyclerView.Adapter<G
       .override(Target.SIZE_ORIGINAL)
       .placeholder(R.drawable.ic_gif_placeholder)
       .centerCrop()
+      .transition(withCrossFade())
+      .format(DecodeFormat.PREFER_ARGB_8888)
       .into(holder.imageView)
     holder.imageView.setOnClickListener { itemClickListener?.invoke(obj) }
   }

@@ -38,8 +38,8 @@ class GifDetailsBottomSheet : AppBottomSheetDialogFragment<GifDetailsPresenter>(
   override fun loadImage(url: String) = activity!!.runOnUiThread {
     Glide.with(this)
       .load(url)
-      .override(Target.SIZE_ORIGINAL)
       .placeholder(R.drawable.ic_gif_placeholder)
+      .override(Target.SIZE_ORIGINAL)
       .centerCrop()
       .into(image)
   }

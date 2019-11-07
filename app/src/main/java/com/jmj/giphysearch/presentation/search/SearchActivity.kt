@@ -50,6 +50,7 @@ class SearchActivity : AppActivity<SearchPresenter>(), SearchView {
       addOnScrollListener(scrollListener)
     }
 
+
     /* other UI */
     searchHelperButton.setOnClickListener {
       // hacky but drives the same logic as a menu item click :)
